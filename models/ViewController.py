@@ -38,11 +38,12 @@ class MainWindow(QMainWindow):
         self.yourplayer = None
         self.otherplayer = None
         self.movenumber = 0
+        self.playagain = False
 
         self.AIturn = None
         self.gofirst() #decides who goes first
 
-        self.AImoves = []
+        self.AImoves = [] #creates a array to keep track of AImoves
         for i in range(9):
             self.AImoves.append(None)
 
@@ -57,7 +58,6 @@ class MainWindow(QMainWindow):
         self.refresh() #refeshes score and board
 
     def refresh(self):
-
         self.wincheck(1) #check if user won
         self.wincheck(0) #check if AI won
         self.tiecheck() #check if there is a tie
@@ -68,11 +68,12 @@ class MainWindow(QMainWindow):
 
         self.updateboard() #update board
 
-        if (self.AIturn == True):
+        if (self.AIturn == True and self.playagain == False):
             self.AImovefunc() #AI makes move if opponent did not win with last move
         
         self.wincheck(0) #check if win codnitions for AI succeeded
-        self.tiecheck() #not sure if needed maybe can be in another piece of code
+        if (self.playagain == False):
+            self.tiecheck() #not sure if needed maybe can be in another piece of code
 
         return
 
@@ -109,51 +110,83 @@ class MainWindow(QMainWindow):
         if (button == "topleft"):           #locate which button, and then assign as your player
             self.yourplayer = yourplayer
             self.m.topleft = yourplayer
-
         if (button == "topmiddle"):
             self.yourplayer = yourplayer
             self.m.topmiddle = yourplayer
-
         if (button == "topright"):
             self.yourplayer = yourplayer
             self.m.topright = yourplayer
-
         if (button == "middleleft"):
             self.yourplayer = yourplayer
             self.m.middleleft = yourplayer
-
         if (button == "middlemiddle"):
             self.yourplayer = yourplayer
             self.m.middlemiddle = yourplayer
-
         if (button == "middleright"):
             self.yourplayer = yourplayer
             self.m.middleright = yourplayer
-
         if (button == "bottomleft"):
             self.yourplayer = yourplayer
             self.m.bottomleft = yourplayer
-
         if (button == "bottommiddle"):
             self.yourplayer = yourplayer
             self.m.bottommiddle = yourplayer
-
         if (button == "bottomright"):
             self.yourplayer = yourplayer
-
             self.m.bottomright = yourplayer
 
         abstract_button.setEnabled(False) #turn that button off
-
-
         self.AIturn = True
-
         self.refresh() #refesh to update text
+        return
+
+    @pyqtSlot()
+    def placemoveincorner(self, number): #function that places a move in a corner
+        
+        fmove = random.randint(1,4) #gets random number from 1-4
+
+        if (number == 1):           #based on what number, place a x in that position, set button as disabled and update movelist
+            if fmove == 1:
+                self.m.topleft = self.otherplayer
+                self.topleft.setEnabled(False)
+                self.AImoves[0] = "topleft"
+            if fmove == 2:
+                self.m.topright = self.otherplayer
+                self.topright.setEnabled(False)
+                self.AImoves[0] = "topright"
+            if fmove == 3:
+                self.m.bottomleft = self.otherplayer
+                self.bottomleft.setEnabled(False)
+                self.AImoves[0] = "bottomleft"
+            if fmove == 4:
+                self.m.bottomright = self.otherplayer
+                self.bottomright.setEnabled(False)
+                self.AImoves[0] = "bottomright"
+            print(self.AImoves[0])
+
+        if (number == 2):
+            if fmove == 1:
+                self.m.topleft = self.otherplayer
+                self.topleft.setEnabled(False)
+                self.AImoves[1] = "topleft"
+            if fmove == 2:
+                self.m.topright = self.otherplayer
+                self.topright.setEnabled(False)
+                self.AImoves[1] = "topright"
+            if fmove == 3:
+                self.m.bottomleft = self.otherplayer
+                self.bottomleft.setEnabled(False)
+                self.AImoves[1] = "bottomleft"
+            if fmove == 4:
+                self.m.bottomright = self.otherplayer
+                self.bottomright.setEnabled(False)
+                self.AImoves[1] = "bottomright"
+            print(self.AImoves[1])
 
         return
 
     @pyqtSlot()
-    def wincheck(self, number): #checks two things if called with 1 or 2, checks if user meets win conditions. increments/decrements accordingly
+    def wincheck(self, number): #checks two things if called with 1 or 2, checks if user meets win conditions. increments/decrements score accordingly
         if (number == 1):
             playerpiece = self.yourplayer
         else:
@@ -167,68 +200,37 @@ class MainWindow(QMainWindow):
             self.m.topright == playerpiece and self.m.middleright == playerpiece and self.m.bottomright == playerpiece or
             self.m.topleft == playerpiece and self.m.middlemiddle == playerpiece and self.m.bottomright == playerpiece or
             self.m.topright == playerpiece and self.m.middlemiddle == playerpiece and self.m.bottomleft == playerpiece):
-            if self.yourplayer == playerpiece:
-                self.m.wins += 1
-                print("YOU WIN!!")
-
-                self.topleft.setText("")
-                self.topmiddle.setText("")
-                self.topright.setText("")
-                self.middleleft.setText("")
-                self.middlemiddle.setText("Play Again?")
-                self.middleright.setText("")
-                self.bottomleft.setText("")
-                self.bottommiddle.setText("")
-                self.bottomright.setText("")
+            if self.yourplayer == playerpiece: #if your piece is the playerpiece
+                self.m.wins += 1 #increment wins
+                print("YOU WIN!!") #you win!
+                self.playagain = True #set playagain variable to true to toggle button use
 
             else:
-                self.m.losses += 1
-                print("YOU LOSE! :(")
+                self.m.losses += 1 #increment losses
+                print("YOU LOSE! :(") #you lose
+                self.playagain = True #set playagain variable to true to toggle button use
+                
+            if (self.playagain == True): #if playagain is true, diable all buttons and wait for "playagain" button press
+                self.topleft.setEnabled(False)
+                self.topmiddle.setEnabled(False)
+                self.topright.setEnabled(False)
+                self.middleleft.setEnabled(False)
+                self.middlemiddle.setEnabled(False)
+                self.middleright.setEnabled(False)
+                self.bottomleft.setEnabled(False)
+                self.bottommiddle.setEnabled(False)
+                self.bottomright.setEnabled(False)
 
-                self.topleft.setText("")
-                self.topmiddle.setText("")
-                self.topright.setText("")
-                self.middleleft.setText("")
-                self.middlemiddle.setText("Play Again?")
-                self.middleright.setText("")
-                self.bottomleft.setText("")
-                self.bottommiddle.setText("")
-                self.bottomright.setText("")
+                self.giveupbutton.setText("Play Again?") #change text of give-up button
 
-            self.clearboard()
+            self.winnum.setText(str(self.m.wins)) #reset number of wins to accurate num
+            self.lossnum.setText(str(self.m.losses)) #reset number of losses to accurate num
+            self.tienum.setText(str(self.m.ties)) #reset number of ties to accurate num
+
+            #self.updateboard()
+            #self.clearboard()
 
         return
-
-    @pyqtSlot()
-    def clearboard(self): #clears the entire board and varaibles, also sets up which user starts next game
-            self.m.topleft = ""
-            self.m.topmiddle = ""
-            self.m.topright = "" 
-            self.m.middleleft = "" 
-            self.m.middlemiddle = "" 
-            self.m.middleright = "" 
-            self.m.bottomleft = "" 
-            self.m.bottommiddle = "" 
-            self.m.bottomright = "" 
-
-            self.topleft.setEnabled(True)
-            self.topmiddle.setEnabled(True)
-            self.topright.setEnabled(True)
-            self.middleleft.setEnabled(True)
-            self.middlemiddle.setEnabled(True)
-            self.middleright.setEnabled(True)
-            self.bottomleft.setEnabled(True)
-            self.bottommiddle.setEnabled(True)
-            self.bottomright.setEnabled(True)
-
-            self.movenumber = 0
-            self.updateboard()
-
-            for i in range(9):
-                self.AImoves[i] = None
-
-            print("NEW GAME \n")
-            self.gofirst()
 
     @pyqtSlot()
     def tiecheck(self): #if these is a piece in all positions and win condition not met, increment tie
@@ -244,32 +246,53 @@ class MainWindow(QMainWindow):
 
             self.m.ties += 1 #increment number of ties
             print("TIE \n")
-            self.clearboard() #clearboard for new game
+
+            self.playagain = True #set playagain variable to true to toggle button use
+            
+            self.topleft.setEnabled(False) #disable all buttons and wait for signal from playagain button
+            self.topmiddle.setEnabled(False)
+            self.topright.setEnabled(False)
+            self.middleleft.setEnabled(False)
+            self.middlemiddle.setEnabled(False)
+            self.middleright.setEnabled(False)
+            self.bottomleft.setEnabled(False)
+            self.bottommiddle.setEnabled(False)
+            self.bottomright.setEnabled(False)
+
+            self.giveupbutton.setText("Play Again?") #update text
+
+            self.winnum.setText(str(self.m.wins)) #reset number of wins to accurate num
+            self.lossnum.setText(str(self.m.losses)) #reset number of losses to accurate num
+            self.tienum.setText(str(self.m.ties)) #reset number of ties to accurate num
+
+            #self.clearboard() #clearboard for new game
 
         return
 
     @pyqtSlot()
-    def AImovefunc(self):
+    def AImovefunc(self): #AIMovefunc has several base moves that are hard coded to include randomness,
+                          #after base moves have been established, winning moves, blocking moves and then random moves are done.
         
         self.movenumber += 1
-        #movenotmadeyet = True
         print("The move number now is " + str(self.movenumber))
         print("AI making move...")
 
-        if (self.canwincheck(self.otherplayer, 0) != 0):
+        if (self.canwincheck(self.otherplayer, 0) != 0): #checks if the AI can win in one move
             self.updateboard()
             self.AIturn = False #sets AI turn to false, so user can play
             return
 
-        if (self.canwincheck(self.otherplayer, 1) != 0):
+        if (self.canwincheck(self.otherplayer, 1) != 0): #checks if the AI can place a move to block
             self.updateboard()
             self.AIturn = False #sets AI turn to false, so user can play
+            print("Your move... uwuw")
+            self.movenumber += 1 #increment move
+            print("The move number now is " + str(self.movenumber))
             return  
 
         if self.otherplayer == "X": #if comp is the first to move            
             if (self.movenumber == 1):
                 self.placemoveincorner(1) #place x in random corner
-                #movenotmadeyet = False
 
             if (self.movenumber == 3):
                 tmove = random.randint(1,2)
@@ -280,62 +303,51 @@ class MainWindow(QMainWindow):
                             self.m.bottomright = "X"
                             self.bottomright.setEnabled(False)
                             self.AImoves[2] = "bottomright"
-                            #movenotmadeyet = False
                         if(self.AImoves[0] == "topright"):
                             self.m.bottomleft = "X"
                             self.bottomleft.setEnabled(False)
                             self.AImoves[2] = "bottomleft"
-                            #movenotmadeyet = False
                         if(self.AImoves[0] == "bottomright"):
                             self.m.topleft = "X"
                             self.topleft.setEnabled(False)
                             self.AImoves[2] = "topleft"
-                            #movenotmadeyet = False
                         if(self.AImoves[0] == "bottomleft"):
                             self.m.topright = "X"
                             self.topright.setEnabled(False)
                             self.AImoves[2] = "topright"
-                            #movenotmadeyet = False
                     if (tmove == 2):
                         if (self.AImoves[0] == "topleft"):
                             if (bmove == 1):
                                 self.m.middleright = "X"
                                 self.middleright.setEnabled(False)
                                 self.AImoves[2] = "middleright"
-                                #movenotmadeyet = False
                             else:
                                 self.m.bottommiddle = "X"
                                 self.bottommiddle.setEnabled(False)
                                 self.AImoves[2] = "bottommiddle"
-                                #movenotmadeyet = False
                         if (self.AImoves[0] == "topright"):
                             if (bmove == 1):
                                 self.m.middleleft = "X"
                                 self.middleleft.setEnabled(False)
                                 self.AImoves[2] = "middleleft"
-                                #movenotmadeyet = False
                             else:
                                 self.m.bottommiddle = "X"
                                 self.bottommiddle.setEnabled(False)
                                 self.AImoves[2] = "bottommiddle"
-                                #movenotmadeyet = False
                         if (self.AImoves[0] == "bottomright"):
                             if (bmove == 1):
                                 self.m.topmiddle = "X"
                                 self.topmiddle.setEnabled(False)
                                 self.AImoves[2] = "topmiddle"
-                                #movenotmadeyet = False
                             else:
                                 self.m.middleleft = "X"
                                 self.middleleft.setEnabled(False)
                                 self.AImoves[2] = "middleleft"
-                                #movenotmadeyet = False
                         if (self.AImoves[0] == "bottomleft"):
                             if (bmove == 1):
                                 self.m.middleright = "X"
                                 self.middleright.setEnabled(False)
                                 self.AImoves[2] = "middleright"
-                                #movenotmadeyet = False
                             else:
                                 self.m.topmiddle = "X"
                                 self.topmiddle.setEnabled(False)
@@ -348,79 +360,67 @@ class MainWindow(QMainWindow):
                         rannum = random.randint(0,len(resnum)-1)
                         btn = resnum[rannum]
                         self.buttonsetup(btn)
-                        #movenotmadeyet = False
-
                     if (self.AImoves[0] == "topright"):
                         resnum = self.check("topright")
                         rannum = random.randint(0,len(resnum)-1)
                         btn = resnum[rannum]
                         self.buttonsetup(btn)
-                        #movenotmadeyet = False
-
                     if (self.AImoves[0] == "bottomleft"):
                         resnum = self.check("bottomleft")
                         rannum = random.randint(0,len(resnum)-1)
                         btn = resnum[rannum]
                         self.buttonsetup(btn)
-                        #movenotmadeyet = False
-
                     if (self.AImoves[0] == "bottomright"):
                         resnum = self.check("bottomright")
                         rannum = random.randint(0,len(resnum)-1)
                         btn = resnum[rannum]
                         self.buttonsetup(btn)
-                        #movenotmadeyet = False
 
                     self.AImoves[2] = btn #third move
-                    #movenotmadeyet = False 
 
-        if self.otherplayer == "O": #if second player
+        if self.otherplayer == "O": #if computer is second player...
             if (self.movenumber == 2):
                 if (self.m.middlemiddle == "X"): #if the first player placed an X in center...
                     self.placemoveincorner(2)
-                    #movenotmadeyet = False
                 elif(self.m.middlemiddle == ""): #if there is nothing in middle square, place piece there
                     self.m.middlemiddle = self.otherplayer
                     self.middlemiddle.setEnabled(False)
                     self.AImoves[1] = "middlemiddle"
-                    #movenotmadeyet = False
-
 
             if (self.movenumber == 4):
                 if (self.m.middlemiddle == "X"): #if an x is placed in center, find diagonal of first placed piece and place new piece there
                     if(self.AImoves[0] == "topleft"):
                         self.bottomright = "O"
-                        #movenotmadeyet = False
                     if(self.AImoves[0] == "topright"):
                         self.bottomleft = "O"
-                        #movenotmadeyet = False
                     if(self.AImoves[0] == "bottomright"):
                         self.topleft = "O"
-                        #movenotmadeyet = False
                     if(self.AImoves[0] == "bottomleft"):
                         self.topright = "O"
-                        #movenotmadeyet = False
 
-            #from here keep player from scoring, shoudl result in cats game
+        #if there has been no move done yet, and a random move is possible, complete random move
+        if (self.AImoves[(self.movenumber-1)] == None and self.randommove(self.otherplayer, self.movenumber) == 1):
+            print("random" + str(self.AImoves))
+            self.updateboard()
+            self.AIturn = False #sets AI turn to false, so user can play
+            print("Your move...")
+            self.movenumber += 1 #increment move
+            print("The move number now is " + str(self.movenumber))
+            return
 
-        # if (self.randommove(self.otherplayer, self.movenumber) == 1 and movenotmadeyet == True):
-        #     self.updateboard()
-        #     self.AIturn = False #sets AI turn to false, so user can play
-        #     return
+        print(self.AImoves)
+        print(self.AImoves[self.movenumber-1])
 
-        #movenotmadeyet = True
-
-        self.updateboard()
+        self.updateboard() 
         self.AIturn = False #sets AI turn to false, so user can play
         print("Your move...")
-
         self.movenumber += 1 #increment move
         print("The move number now is " + str(self.movenumber))
-
         return
 
     @pyqtSlot()
-    def check(self, checkedspace):
+    def check(self, checkedspace): #fuction is special subroutine to check for a particular situation arising, 
+                                   #returns spots AI can/should place moves based on desired behavior
         arrayofgoodspots = []
         if (checkedspace == "topleft"):
             arrayofgoodspots.append("bottomright")
@@ -454,7 +454,7 @@ class MainWindow(QMainWindow):
         return arrayofgoodspots
 
     @pyqtSlot()
-    def buttonsetup(self, btn):
+    def buttonsetup(self, btn): #more subroutines
         if ("topleft" == btn):
             self.m.topleft = "X"
             self.topleft.setEnabled(False)
@@ -469,38 +469,37 @@ class MainWindow(QMainWindow):
             self.bottomright.setEnabled(False)  
 
     @pyqtSlot()
-    def randommove(self, playerpiece, movenum):
+    def randommove(self, playerpiece, movenum): #function for AI to complete random move
         print("In random move function")
-        selectedmove = ""
-        movelist = []
+        selectedmove = "" #return variable
+        movelist = [] #array of available moves
 
-        if (self.m.topleft != ""):
+        if (self.m.topleft == ""):
             movelist.append("topleft")
-        if (self.m.topmiddle != ""):
+        if (self.m.topmiddle == ""):
             movelist.append("topmiddle")
-        if (self.m.topright != ""):
+        if (self.m.topright == ""):
             movelist.append("topright")
-        if (self.m.middleleft != ""):
+        if (self.m.middleleft == ""):
             movelist.append("middleleft")
-        if (self.m.middlemiddle != ""):
+        if (self.m.middlemiddle == ""):
             movelist.append("middlemiddle")
-        if (self.m.middleright != ""):
+        if (self.m.middleright == ""):
             movelist.append("middleright")
-        if (self.m.bottomleft != ""):
+        if (self.m.bottomleft == ""):
             movelist.append("bottomleft")
-        if (self.m.bottommiddle != ""):
+        if (self.m.bottommiddle == ""):
             movelist.append("bottommiddle")
-        if (self.m.bottomright != ""):
+        if (self.m.bottomright == ""):
             movelist.append("bottomright")
 
         print(movelist)
 
-
-        fmove = random.randint(1,len(movelist))
-        selectedmove = movelist[fmove-1]
+        fmove = random.randint(1,len(movelist)) #get random number
+        selectedmove = movelist[fmove-1]        #from ran number select matching move
         print("random move of... " + selectedmove)
 
-        if (selectedmove != ""):
+        if (selectedmove != ""): #diable selected button, update board in model
             if (selectedmove == "topleft"):
                 self.m.topleft = self.otherplayer
                 self.topleft.setEnabled(False)
@@ -529,9 +528,11 @@ class MainWindow(QMainWindow):
                 self.m.bottomright = self.otherplayer
                 self.bottomright.setEnabled(False)
 
-        self.AImoves[movenum - 1] = selectedmove
+            self.AImoves[movenum - 1] = selectedmove #update move made in movelist
 
-        return 1
+            return 1
+
+        return 0
 
 
     @pyqtSlot()
@@ -647,7 +648,8 @@ class MainWindow(QMainWindow):
                 self.m.bottomright = self.otherplayer
                 self.bottomright.setEnabled(False)
             
-            print(winspot)
+            self.AImoves[self.movenumber-1] = winspot
+            print(self.AImoves)
 
             return 1
 
@@ -665,50 +667,40 @@ class MainWindow(QMainWindow):
         self.bottommiddle.setText(str(self.m.bottommiddle))
         self.bottomright.setText(str(self.m.bottomright))
 
-    @pyqtSlot()
-    def placemoveincorner(self, number): #function that places a move in a corner
-        
-        fmove = random.randint(1,4) #gets random number from 1-4
-
-        if (number == 1):           #based on what number, place a x in that position, set button as disabled and update movelist
-            if fmove == 1:
-                self.m.topleft = self.otherplayer
-                self.topleft.setEnabled(False)
-                self.AImoves[0] = "topleft"
-            if fmove == 2:
-                self.m.topright = self.otherplayer
-                self.topright.setEnabled(False)
-                self.AImoves[0] = "topright"
-            if fmove == 3:
-                self.m.bottomleft = self.otherplayer
-                self.bottomleft.setEnabled(False)
-                self.AImoves[0] = "bottomleft"
-            if fmove == 4:
-                self.m.bottomright = self.otherplayer
-                self.bottomright.setEnabled(False)
-                self.AImoves[0] = "bottomright"
-            print(self.AImoves[0])
-
-        if (number == 2):
-            if fmove == 1:
-                self.m.topleft = self.otherplayer
-                self.topleft.setEnabled(False)
-                self.AImoves[1] = "topleft"
-            if fmove == 2:
-                self.m.topright = self.otherplayer
-                self.topright.setEnabled(False)
-                self.AImoves[1] = "topright"
-            if fmove == 3:
-                self.m.bottomleft = self.otherplayer
-                self.bottomleft.setEnabled(False)
-                self.AImoves[1] = "bottomleft"
-            if fmove == 4:
-                self.m.bottomright = self.otherplayer
-                self.bottomright.setEnabled(False)
-                self.AImoves[1] = "bottomright"
-            print(self.AImoves[1])
-
         return
+
+    @pyqtSlot()
+    def clearboard(self): #clears the entire board and variables, also sets up which user starts next game
+            self.playagain = False
+            self.m.topleft = ""
+            self.m.topmiddle = ""
+            self.m.topright = "" 
+            self.m.middleleft = "" 
+            self.m.middlemiddle = "" 
+            self.m.middleright = "" 
+            self.m.bottomleft = "" 
+            self.m.bottommiddle = "" 
+            self.m.bottomright = "" 
+
+            self.topleft.setEnabled(True)
+            self.topmiddle.setEnabled(True)
+            self.topright.setEnabled(True)
+            self.middleleft.setEnabled(True)
+            self.middlemiddle.setEnabled(True)
+            self.middleright.setEnabled(True)
+            self.bottomleft.setEnabled(True)
+            self.bottommiddle.setEnabled(True)
+            self.bottomright.setEnabled(True)
+
+            self.movenumber = 0
+            self.updateboard()
+
+            for i in range(9):
+                self.AImoves[i] = None
+
+            print("NEW GAME \n")
+            self.gofirst()
+            self.refresh()
 
     @pyqtSlot()
     def reset(self): #sets all win, lose and tie text fields to zero
@@ -723,22 +715,28 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot() #wont be able to test for a while
     def giveup(self): #checks if all spaces are empty while giveup button is pressed, if not, wont increment a loss
-        if (self.m.topleft == "" and
-            self.m.topmiddle == "" and
-            self.m.topright == "" and
-            self.m.middleleft == "" and
-            self.m.middlemiddle == "" and
-            self.m.middleright == "" and
-            self.m.bottomleft == "" and
-            self.m.bottommiddle == "" and
-            self.m.bottomright == ""):
-
-            self.refresh()
-            return
+        if (self.playagain == True): #if playagain is true, that means "playagain" text is on current button
+                                     #and we want it to habe different behavior than normal.
+            self.clearboard()        #clear the board
+            self.giveupbutton.setText("Give Up") #reset giveup button text.
 
         else:
-            self.clearboard() #else, actually give up
-            self.m.losses += 1 #increment losses
+            if (self.m.topleft == "" and
+                self.m.topmiddle == "" and
+                self.m.topright == "" and
+                self.m.middleleft == "" and
+                self.m.middlemiddle == "" and
+                self.m.middleright == "" and
+                self.m.bottomleft == "" and
+                self.m.bottommiddle == "" and
+                self.m.bottomright == ""):
+
+                self.refresh()
+                return
+
+            else:
+                self.clearboard() #else, actually give up
+                self.m.losses += 1 #increment losses
 
         self.refresh() #refresh to update text
         return

@@ -85,17 +85,17 @@ class MainWindow(QMainWindow):
             self.otherplayer = "O"
             self.playername.setText("X") #set text to "X"
             self.AIturn = False #toggle whos turn it is
-            print("You go first")
+            print("You go first...")
 
             self.movenumber += 1
-            print("The move number now is " + str(self.movenumber))
+            print("Move Number: " + str(self.movenumber))
 
         if start % 2 == 0: #if your number is even
             self.yourplayer = "O" #AI goes first
             self.otherplayer = "X"
             self.playername.setText("0") #set text to "O"
             self.AIturn = True #toggle whose turn it is
-            print("They go first")
+            print("Computer goes first...")
 
         return
 
@@ -105,7 +105,7 @@ class MainWindow(QMainWindow):
         abstract_button = self.sender() #get sender
         button = abstract_button.objectName() #get buttonname
 
-        print("You made the move..." + str(button))
+        print("You made the move: " + str(button))
 
         if (button == "topleft"):           #locate which button, and then assign as your player
             self.yourplayer = yourplayer
@@ -143,6 +143,7 @@ class MainWindow(QMainWindow):
     @pyqtSlot()
     def placemoveincorner(self, number): #function that places a move in a corner
         
+        ret = ""
         fmove = random.randint(1,4) #gets random number from 1-4
 
         if (number == 1):           #based on what number, place a x in that position, set button as disabled and update movelist
@@ -162,7 +163,6 @@ class MainWindow(QMainWindow):
                 self.m.bottomright = self.otherplayer
                 self.bottomright.setEnabled(False)
                 self.AImoves[0] = "bottomright"
-            print(self.AImoves[0])
 
         if (number == 2):
             if fmove == 1:
@@ -181,9 +181,8 @@ class MainWindow(QMainWindow):
                 self.m.bottomright = self.otherplayer
                 self.bottomright.setEnabled(False)
                 self.AImoves[1] = "bottomright"
-            print(self.AImoves[1])
 
-        return
+        return 
 
     @pyqtSlot()
     def wincheck(self, number): #checks two things if called with 1 or 2, checks if user meets win conditions. increments/decrements score accordingly
@@ -202,12 +201,12 @@ class MainWindow(QMainWindow):
             self.m.topright == playerpiece and self.m.middlemiddle == playerpiece and self.m.bottomleft == playerpiece):
             if self.yourplayer == playerpiece: #if your piece is the playerpiece
                 self.m.wins += 1 #increment wins
-                print("YOU WIN!!") #you win!
+                print("YOU HAVE WON!!") #you win!
                 self.playagain = True #set playagain variable to true to toggle button use
 
             else:
                 self.m.losses += 1 #increment losses
-                print("YOU LOSE! :(") #you lose
+                print("YOU HAVE LOST! :(") #you lose
                 self.playagain = True #set playagain variable to true to toggle button use
                 
             if (self.playagain == True): #if playagain is true, diable all buttons and wait for "playagain" button press
@@ -245,7 +244,7 @@ class MainWindow(QMainWindow):
             self.m.bottomright != ""):
 
             self.m.ties += 1 #increment number of ties
-            print("TIE \n")
+            print("CATS GAME - TIE")
 
             self.playagain = True #set playagain variable to true to toggle button use
             
@@ -272,10 +271,8 @@ class MainWindow(QMainWindow):
     @pyqtSlot()
     def AImovefunc(self): #AIMovefunc has several base moves that are hard coded to include randomness,
                           #after base moves have been established, winning moves, blocking moves and then random moves are done.
-        
         self.movenumber += 1
-        print("The move number now is " + str(self.movenumber))
-        print("AI making move...")
+        print("Move Number: " + str(self.movenumber))
 
         if (self.canwincheck(self.otherplayer, 0) != 0): #checks if the AI can win in one move
             self.updateboard()
@@ -285,9 +282,9 @@ class MainWindow(QMainWindow):
         if (self.canwincheck(self.otherplayer, 1) != 0): #checks if the AI can place a move to block
             self.updateboard()
             self.AIturn = False #sets AI turn to false, so user can play
-            print("Your move... uwuw")
+            print("Your move... ")
             self.movenumber += 1 #increment move
-            print("The move number now is " + str(self.movenumber))
+            print("Move Number: " + str(self.movenumber))
             return  
 
         if self.otherplayer == "X": #if comp is the first to move            
@@ -400,22 +397,22 @@ class MainWindow(QMainWindow):
 
         #if there has been no move done yet, and a random move is possible, complete random move
         if (self.AImoves[(self.movenumber-1)] == None and self.randommove(self.otherplayer, self.movenumber) == 1):
-            print("random" + str(self.AImoves))
+            #print("random" + str(self.AImoves))
             self.updateboard()
             self.AIturn = False #sets AI turn to false, so user can play
             print("Your move...")
             self.movenumber += 1 #increment move
-            print("The move number now is " + str(self.movenumber))
+            print("Move number: " + str(self.movenumber))
             return
 
-        print(self.AImoves)
-        print(self.AImoves[self.movenumber-1])
+        #print(self.AImoves)
+        print("Computer made move: " + str(self.AImoves[self.movenumber-1]))
 
         self.updateboard() 
         self.AIturn = False #sets AI turn to false, so user can play
         print("Your move...")
         self.movenumber += 1 #increment move
-        print("The move number now is " + str(self.movenumber))
+        print("Move number: " + str(self.movenumber))
         return
 
     @pyqtSlot()
@@ -449,7 +446,7 @@ class MainWindow(QMainWindow):
                 arrayofgoodspots.append("topright")
             if (self.m.bottommiddle != "O"):
                 arrayofgoodspots.append("bottomleft")
-        print(arrayofgoodspots)
+        #print(arrayofgoodspots)
 
         return arrayofgoodspots
 
@@ -470,7 +467,7 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def randommove(self, playerpiece, movenum): #function for AI to complete random move
-        print("In random move function")
+        #print("In random move function")
         selectedmove = "" #return variable
         movelist = [] #array of available moves
 
@@ -493,11 +490,11 @@ class MainWindow(QMainWindow):
         if (self.m.bottomright == ""):
             movelist.append("bottomright")
 
-        print(movelist)
+        #print(movelist)
 
         fmove = random.randint(1,len(movelist)) #get random number
         selectedmove = movelist[fmove-1]        #from ran number select matching move
-        print("random move of... " + selectedmove)
+        print("Computer made move: " + selectedmove)
 
         if (selectedmove != ""): #diable selected button, update board in model
             if (selectedmove == "topleft"):
@@ -649,7 +646,8 @@ class MainWindow(QMainWindow):
                 self.bottomright.setEnabled(False)
             
             self.AImoves[self.movenumber-1] = winspot
-            print(self.AImoves)
+            print("Computer made move: " + str(self.AImoves[self.movenumber-1]))
+            #print(self.AImoves)
 
             return 1
 
@@ -698,7 +696,7 @@ class MainWindow(QMainWindow):
             for i in range(9):
                 self.AImoves[i] = None
 
-            print("NEW GAME \n")
+            print("~ * ~ NEW GAME ~ * ~")
             self.gofirst()
             self.refresh()
 

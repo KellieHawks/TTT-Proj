@@ -17,13 +17,36 @@ from datetime import datetime, timedelta
 from Model import TTTModel
 
 # Global variable for storing UI files
-UI_PATHS = {"MainWindow": "../UI/MainWindow.ui", "RuleWindow": "../UI/rules.ui"}
+UI_PATHS = {"MainWindow": "../UI/MainWindow.ui", "RuleWindow": "../UI/rules.ui", "NameChange": "../UI/changename.ui"}
 
-class rule_window(QDialog):
+class rule_window(QDialog): #a window that opens and shows rules
     def __init__(self, model):
         super(rule_window, self).__init__()#Call super of QDialog
         loadUi(UI_PATHS["RuleWindow"], self) #Load the correct ui (and therefore all it's elements)
         self.m = model         #The model is passed from the MainView so that the dialog can have the model save user data.
+
+class changenamewindow(QDialog): #a window that opens to change the name the name of the player
+    def __init__(self, model):
+        super(changenamewindow, self).__init__() #initializes the parent window
+        loadUi(UI_PATHS["NameChange"], self) #
+        self.m = model 
+
+        if (self.m.playname != "Your"): #if the playername is the pre-existing one, dont show
+            self.lineEdit.setText(self.m.playname)
+
+        self.push_save.clicked.connect(self.loadSaveName) #sets save subgoal signal
+        self.push_cancel.clicked.connect(self.loadCancelName) #sets cancel subgoal signal
+
+    @pyqtSlot()
+    def loadSaveName(self): #takes line edit and assigns name
+        if self.lineEdit.text().strip() != "": #if goal name isn't blank
+            self.m.playname = str(self.lineEdit.text())
+            self.accept()
+
+    @pyqtSlot() #closes window if cancel is pressed
+    def loadCancelName(self):
+        self.close()
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -33,7 +56,7 @@ class MainWindow(QMainWindow):
 
         #Class Variables
         self.movebuttons.setExclusive(False) #makes it so each button can be pressed individually
-        self.m = TTTModel(0,0,0) #create an instance of the model
+        self.m = TTTModel(0,0,0, []) #create an instance of the model
         self.setWindowTitle('Tic Tac Toe Bot') #update the windows title
         self.yourplayer = None
         self.otherplayer = None
@@ -48,6 +71,7 @@ class MainWindow(QMainWindow):
             self.AImoves.append(None)
 
         #Connect Buttons
+        self.namebutton.clicked.connect(self.changename)
         self.giveupbutton.clicked.connect(self.giveup)
         self.resetbutton.clicked.connect(self.reset)
         self.rulesbutton.clicked.connect(self.rules)
@@ -85,9 +109,13 @@ class MainWindow(QMainWindow):
             self.otherplayer = "O"
             self.playername.setText("X") #set text to "X"
             self.AIturn = False #toggle whos turn it is
-            print("You go first...")
-
+            if (self.m.playname == "Your"):
+                self.m.addmove("You go first...") #add move to list of moves in model
+            else:
+                self.m.addmove(self.m.playname + " goes first...")
+            #print("You go first...")
             self.movenumber += 1
+            self.m.addmove("Move Number: " + str(self.movenumber))
             print("Move Number: " + str(self.movenumber))
 
         if start % 2 == 0: #if your number is even
@@ -95,8 +123,10 @@ class MainWindow(QMainWindow):
             self.otherplayer = "X"
             self.playername.setText("0") #set text to "O"
             self.AIturn = True #toggle whose turn it is
+            self.m.addmove("Computer goes first...")
             print("Computer goes first...")
 
+        self.refreshlistview()
         return
 
     @pyqtSlot()
@@ -105,7 +135,11 @@ class MainWindow(QMainWindow):
         abstract_button = self.sender() #get sender
         button = abstract_button.objectName() #get buttonname
 
-        print("You made the move: " + str(button))
+        if (self.m.playname == "Your"):
+            self.m.addmove("You made the move: " + str(button))
+        else:
+            self.m.addmove(self.m.playname + " made the move: " + str(button))
+        #print("You made the move: " + str(button))
 
         if (button == "topleft"):           #locate which button, and then assign as your player
             self.yourplayer = yourplayer
@@ -137,6 +171,7 @@ class MainWindow(QMainWindow):
 
         abstract_button.setEnabled(False) #turn that button off
         self.AIturn = True
+        self.refreshlistview() #update the list of moves
         self.refresh() #refesh to update text
         return
 
@@ -201,12 +236,14 @@ class MainWindow(QMainWindow):
             self.m.topright == playerpiece and self.m.middlemiddle == playerpiece and self.m.bottomleft == playerpiece):
             if self.yourplayer == playerpiece: #if your piece is the playerpiece
                 self.m.wins += 1 #increment wins
-                print("YOU HAVE WON!!") #you win!
+                self.m.addmove("YOU HAVE WON!!")
+                #print("YOU HAVE WON!!") #you win!
                 self.playagain = True #set playagain variable to true to toggle button use
 
             else:
                 self.m.losses += 1 #increment losses
-                print("YOU HAVE LOST! :(") #you lose
+                self.m.addmove("YOU HAVE LOST! :(")
+                #print("YOU HAVE LOST! :(") #you lose
                 self.playagain = True #set playagain variable to true to toggle button use
                 
             if (self.playagain == True): #if playagain is true, diable all buttons and wait for "playagain" button press
@@ -220,14 +257,14 @@ class MainWindow(QMainWindow):
                 self.bottommiddle.setEnabled(False)
                 self.bottomright.setEnabled(False)
 
+                self.m.addmove("Play Again?")
                 self.giveupbutton.setText("Play Again?") #change text of give-up button
 
             self.winnum.setText(str(self.m.wins)) #reset number of wins to accurate num
             self.lossnum.setText(str(self.m.losses)) #reset number of losses to accurate num
             self.tienum.setText(str(self.m.ties)) #reset number of ties to accurate num
 
-            #self.updateboard()
-            #self.clearboard()
+            self.refreshlistview() #update list view
 
         return
 
@@ -244,7 +281,8 @@ class MainWindow(QMainWindow):
             self.m.bottomright != ""):
 
             self.m.ties += 1 #increment number of ties
-            print("CATS GAME - TIE")
+            self.m.addmove("CATS GAME - TIE")
+            #print("CATS GAME - TIE")
 
             self.playagain = True #set playagain variable to true to toggle button use
             
@@ -258,13 +296,14 @@ class MainWindow(QMainWindow):
             self.bottommiddle.setEnabled(False)
             self.bottomright.setEnabled(False)
 
+            self.m.addmove("Play Again?")
             self.giveupbutton.setText("Play Again?") #update text
 
             self.winnum.setText(str(self.m.wins)) #reset number of wins to accurate num
             self.lossnum.setText(str(self.m.losses)) #reset number of losses to accurate num
             self.tienum.setText(str(self.m.ties)) #reset number of ties to accurate num
 
-            #self.clearboard() #clearboard for new game
+            self.refreshlistview()
 
         return
 
@@ -272,19 +311,30 @@ class MainWindow(QMainWindow):
     def AImovefunc(self): #AIMovefunc has several base moves that are hard coded to include randomness,
                           #after base moves have been established, winning moves, blocking moves and then random moves are done.
         self.movenumber += 1
+        self.m.addmove("Move Number: " + str(self.movenumber))
         print("Move Number: " + str(self.movenumber))
 
         if (self.canwincheck(self.otherplayer, 0) != 0): #checks if the AI can win in one move
             self.updateboard()
             self.AIturn = False #sets AI turn to false, so user can play
+            self.refreshlistview()
             return
 
         if (self.canwincheck(self.otherplayer, 1) != 0): #checks if the AI can place a move to block
             self.updateboard()
             self.AIturn = False #sets AI turn to false, so user can play
-            print("Your move... ")
+            
+            if (self.m.playname == "Your"):
+                self.m.addmove("Your move...")
+            else:
+                self.m.addmove(self.m.playname + "'s move...")
+
+            #self.m.addmove("Your move... ")
+            #print("Your move... ")
             self.movenumber += 1 #increment move
+            self.m.addmove("Move Number: " + str(self.movenumber))
             print("Move Number: " + str(self.movenumber))
+            self.refreshlistview()
             return  
 
         if self.otherplayer == "X": #if comp is the first to move            
@@ -400,19 +450,39 @@ class MainWindow(QMainWindow):
             #print("random" + str(self.AImoves))
             self.updateboard()
             self.AIturn = False #sets AI turn to false, so user can play
-            print("Your move...")
+            
+            if (self.m.playname == "Your"):
+                self.m.addmove("Your move...")
+            else:
+                self.m.addmove(self.m.playname + "'s move...")
+
+
+            #self.m.addmove("Your move... ")
+            #print("Your move...")
             self.movenumber += 1 #increment move
+            self.m.addmove("Move number: " + str(self.movenumber))
             print("Move number: " + str(self.movenumber))
+            self.refreshlistview()
             return
 
         #print(self.AImoves)
-        print("Computer made move: " + str(self.AImoves[self.movenumber-1]))
+        self.m.addmove("Computer made move: " + str(self.AImoves[self.movenumber-1]))
+        #print("Computer made move: " + str(self.AImoves[self.movenumber-1]))
 
         self.updateboard() 
         self.AIturn = False #sets AI turn to false, so user can play
-        print("Your move...")
+        
+        if (self.m.playname == "Your"):
+                self.m.addmove("Your move...")
+        else:
+            self.m.addmove(self.m.playname + "'s move...")
+
+        #self.m.addmove("Your move... ")
+        #print("Your move...")
         self.movenumber += 1 #increment move
-        print("Move number: " + str(self.movenumber))
+        self.m.addmove("Move number: " + str(self.movenumber))
+        #print("Move number: " + str(self.movenumber))
+        self.refreshlistview()
         return
 
     @pyqtSlot()
@@ -467,7 +537,6 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def randommove(self, playerpiece, movenum): #function for AI to complete random move
-        #print("In random move function")
         selectedmove = "" #return variable
         movelist = [] #array of available moves
 
@@ -490,11 +559,11 @@ class MainWindow(QMainWindow):
         if (self.m.bottomright == ""):
             movelist.append("bottomright")
 
-        #print(movelist)
-
         fmove = random.randint(1,len(movelist)) #get random number
         selectedmove = movelist[fmove-1]        #from ran number select matching move
+        self.m.addmove("Computer made move: " + selectedmove)
         print("Computer made move: " + selectedmove)
+        self.refreshlistview()
 
         if (selectedmove != ""): #diable selected button, update board in model
             if (selectedmove == "topleft"):
@@ -646,9 +715,10 @@ class MainWindow(QMainWindow):
                 self.bottomright.setEnabled(False)
             
             self.AImoves[self.movenumber-1] = winspot
+            self.m.addmove("Computer made move: " + str(self.AImoves[self.movenumber-1]))
             print("Computer made move: " + str(self.AImoves[self.movenumber-1]))
             #print(self.AImoves)
-
+            self.refreshlistview() #update movelist
             return 1
 
         return 0
@@ -696,7 +766,12 @@ class MainWindow(QMainWindow):
             for i in range(9):
                 self.AImoves[i] = None
 
+            if (self.m.movelist == []):
+                self.m.addmove("~ * ~ NEW GAME ~ * ~ ")
+            else:
+                self.m.addmove("\n~ * ~ NEW GAME ~ * ~ ")
             print("~ * ~ NEW GAME ~ * ~")
+            self.refreshlistview()
             self.gofirst()
             self.refresh()
 
@@ -705,7 +780,8 @@ class MainWindow(QMainWindow):
         self.m.wins = 0 
         self.m.losses = 0
         self.m.ties = 0
-
+        self.m.movelist = [] #sets movelist to empty lsit
+        self.refreshlistview()
         self.refresh() #refesh to update text
         self.clearboard()#clears board
 
@@ -717,7 +793,6 @@ class MainWindow(QMainWindow):
                                      #and we want it to habe different behavior than normal.
             self.clearboard()        #clear the board
             self.giveupbutton.setText("Give Up") #reset giveup button text.
-
         else:
             if (self.m.topleft == "" and
                 self.m.topmiddle == "" and
@@ -740,16 +815,39 @@ class MainWindow(QMainWindow):
         return
 
     @pyqtSlot()
-    def rules(self):
+    def rules(self): #calls to cooresponding function
         self.ruleswindow()
         self.refresh() #refresh to update text
         return
+    
+    @pyqtSlot()
+    def changename(self): #calls to cooresponding function
+        self.namewindow()
+        return
 
-    def ruleswindow(self):
+    def namewindow(self): #opens name window
+        nameDialog = changenamewindow(self.m)
+        if nameDialog.exec():
+            return(True)
+        return False
+
+    def ruleswindow(self): #opens rule window
         addDialog = rule_window(self.m)
         if addDialog.exec():
             return(True)
         return False
+
+    def addtolistview(self, movelist): #clears the qlistwidget, takes all moves from movelist and adds then
+        self.listWidget.clear()
+        for move in movelist:
+            item = QListWidgetItem() # Create an item for the list
+            item.setText(move) # Set the text of the item to the name of the goal
+            self.listWidget.addItem(item)
+
+    def refreshlistview(self): #refreshes list view of moves
+        movelist = self.m.getmovelist()
+        self.addtolistview(movelist)
+
     
 if __name__ == '__main__':
     app = QApplication(sys.argv)

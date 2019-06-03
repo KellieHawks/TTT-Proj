@@ -1,8 +1,9 @@
 """
-    Authors: Noah Palmer, Holly Hardin, Isaac Lance
-    Date: 03/10/2019
-    CIS 422
-    GoalTracker
+    Authors: Kellie Hawks
+    Date: 04/14/2019
+    CIS 407
+    Tic Tac Toe Bot
+    Cite: Rules for tictactoe - http://www.cyberoculus.com/tic-tac-toe.asp?Action=Rules
 """
 #System Imports
 from datetime import datetime, timedelta
@@ -10,11 +11,15 @@ import copy
 
 class TTTModel:
     """CONSTRUCTOR FOR MODEL"""
-    def __init__(self, wins, losses, ties):
+    def __init__(self, wins, losses, ties, movelist):
 
         self.wins = wins #list of goal objects
         self.losses = losses #integer
         self.ties = ties #integer
+
+        
+        self.playname = "Your"
+        self.movelist = movelist
 
         self.topleft = ""
         self.topmiddle = ""
@@ -25,6 +30,11 @@ class TTTModel:
         self.bottomleft = ""
         self.bottommiddle = ""
         self.bottomright = ""
+    def getmovelist(self):
+        return copy.deepcopy(self.movelist)
+
+    def addmove(self, movedescr):
+        self.movelist.append(movedescr)
 
     def get_wins(self):
         return self.wins
